@@ -1,0 +1,164 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;0,700;1,400&display=swap');
+
+@layer base {
+  :root {
+    --background: 220 20% 97%;
+    --foreground: 220 25% 10%;
+
+    --card: 220 15% 95%;
+    --card-foreground: 220 25% 10%;
+
+    --popover: 220 15% 95%;
+    --popover-foreground: 220 25% 10%;
+
+    --primary: 45 80% 50%;
+    --primary-foreground: 220 25% 10%;
+
+    --secondary: 220 15% 90%;
+    --secondary-foreground: 220 25% 15%;
+
+    --muted: 220 10% 92%;
+    --muted-foreground: 220 15% 40%;
+
+    --accent: 280 60% 55%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 140 60% 40%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 35 90% 50%;
+    --warning-foreground: 220 25% 10%;
+
+    --xp: 280 70% 55%;
+    --xp-foreground: 0 0% 100%;
+
+    --coin: 45 90% 55%;
+    --coin-foreground: 220 25% 10%;
+
+    --border: 220 15% 85%;
+    --input: 220 15% 90%;
+    --ring: 45 80% 50%;
+
+    --radius: 0.5rem;
+
+    --sidebar-background: 220 15% 93%;
+    --sidebar-foreground: 220 25% 15%;
+    --sidebar-primary: 45 80% 50%;
+    --sidebar-primary-foreground: 220 25% 10%;
+    --sidebar-accent: 220 12% 88%;
+    --sidebar-accent-foreground: 220 25% 15%;
+    --sidebar-border: 220 15% 85%;
+    --sidebar-ring: 45 80% 50%;
+
+    --font-display: 'Cinzel', serif;
+    --font-body: 'Crimson Text', serif;
+  }
+
+  .dark {
+    --background: 220 25% 8%;
+    --foreground: 40 20% 90%;
+
+    --card: 220 20% 12%;
+    --card-foreground: 40 20% 90%;
+
+    --popover: 220 22% 10%;
+    --popover-foreground: 40 20% 90%;
+
+    --primary: 45 85% 55%;
+    --primary-foreground: 220 25% 8%;
+
+    --secondary: 220 18% 18%;
+    --secondary-foreground: 40 15% 85%;
+
+    --muted: 220 15% 15%;
+    --muted-foreground: 220 10% 55%;
+
+    --accent: 280 65% 60%;
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 65% 45%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 140 55% 45%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 35 85% 55%;
+    --warning-foreground: 220 25% 8%;
+
+    --xp: 280 75% 65%;
+    --xp-foreground: 0 0% 100%;
+
+    --coin: 45 95% 60%;
+    --coin-foreground: 220 25% 8%;
+
+    --border: 220 15% 20%;
+    --input: 220 18% 18%;
+    --ring: 45 85% 55%;
+
+    --sidebar-background: 220 22% 10%;
+    --sidebar-foreground: 40 15% 85%;
+    --sidebar-primary: 45 85% 55%;
+    --sidebar-primary-foreground: 220 25% 8%;
+    --sidebar-accent: 220 18% 15%;
+    --sidebar-accent-foreground: 40 15% 85%;
+    --sidebar-border: 220 15% 18%;
+    --sidebar-ring: 45 85% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
+
+@layer utilities {
+  .font-display {
+    font-family: var(--font-display);
+  }
+  
+  .font-body {
+    font-family: var(--font-body);
+  }
+
+  .text-gradient-gold {
+    @apply bg-gradient-to-r from-amber-400 via-yellow-300 to-amber-500 bg-clip-text text-transparent;
+  }
+
+  .text-gradient-xp {
+    @apply bg-gradient-to-r from-purple-400 via-violet-400 to-purple-500 bg-clip-text text-transparent;
+  }
+
+  .glow-gold {
+    box-shadow: 0 0 20px hsl(45 85% 55% / 0.3), 0 0 40px hsl(45 85% 55% / 0.1);
+  }
+
+  .glow-xp {
+    box-shadow: 0 0 20px hsl(280 75% 65% / 0.3), 0 0 40px hsl(280 75% 65% / 0.1);
+  }
+
+  .card-dark {
+    @apply bg-card border border-border/50 backdrop-blur-sm;
+    background: linear-gradient(
+      145deg,
+      hsl(var(--card)) 0%,
+      hsl(var(--card) / 0.8) 100%
+    );
+  }
+}
