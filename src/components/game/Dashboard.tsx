@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useUser } from '@/hooks/useUser';
 import { useDay } from '@/hooks/useDay';
 import { useEvents } from '@/hooks/useEvents';
@@ -9,17 +9,26 @@ import { HabitTracker } from './HabitTracker';
 import { DaySummary } from './DaySummary';
 import { EventLog } from './EventLog';
 import { XpChart } from './XpChart';
+import { Store } from './Store';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Play, Shield, LogOut, BarChart3 } from 'lucide-react';
-import { generateId } from '@/lib/storage';
+import { Play, Shield, LogOut, BarChart3, ShoppingCart } from 'lucide-react';
+import { generateId, addEvent } from '@/lib/storage';
+import { StoreReward } from '@/types/game';
 import { toast } from 'sonner';
 
+interface RedeemedReward {
+  id: string;
+  reward: StoreReward;
+  redeemedAt: string;
+}
+
 export const Dashboard = () => {
-  const { user, level, xpProgress, slots, addXp, removeXp, addCoins, updateUser, useForgiveness, resetUser } = useUser();
+  const { user, level, xpProgress, slots, addXp, removeXp, addCoins, spendCoins, updateUser, useForgiveness, resetUser } = useUser();
   const { currentDay, allDays, startDay, addMission, updateMissionStatus, recordPositiveHabit, recordNegativeHabit, closeDay, loadDay } = useDay();
   const { events, refresh: refreshEvents } = useEvents();
+  const [redeemedHistory, setRedeemedHistory] = useState<RedeemedReward[]>([]);
 
   useEffect(() => {
     loadDay();
@@ -100,6 +109,36 @@ export const Dashboard = () => {
     });
   };
 
+  const handleRedeemReward = (reward: StoreReward) => {
+    if (spendCoins(reward.cost)) {
+      const redeemed: RedeemedReward = {
+        id: generateId(),
+        reward,
+        redeemedAt: new Date().toISOString(),
+      };
+      setRedeemedHistory(prev => [redeemed, ...prev]);
+      addEvent({ type: 'reward_redeemed', details: `Resgatou: ${reward.name}`, coinChange: -reward.cost });
+      refreshEvents();
+      toast.success(`🎁 ${reward.name} resgatado!`);
+    }
+  };
+
+  const handleAddReward = (name: string, description: string, cost: number) => {
+    const newReward: StoreReward = {
+      id: generateId(),
+      name,
+      description,
+      cost,
+      available: true,
+    };
+    updateUser({ storeRewards: [...user.storeRewards, newReward] });
+    toast.success('Recompensa adicionada!');
+  };
+
+  const handleDeleteReward = (id: string) => {
+    updateUser({ storeRewards: user.storeRewards.filter(r => r.id !== id) });
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <header className="border-b border-border/50 bg-card/50 backdrop-blur-sm sticky top-0 z-10">
@@ -145,11 +184,15 @@ export const Dashboard = () => {
           </Card>
         ) : (
           <Tabs defaultValue="missions" className="space-y-6">
-            <TabsList className="grid grid-cols-5 w-full max-w-lg mx-auto">
+            <TabsList className="grid grid-cols-6 w-full max-w-2xl mx-auto">
               <TabsTrigger value="missions">Missões</TabsTrigger>
               <TabsTrigger value="habits">Hábitos</TabsTrigger>
               <TabsTrigger value="summary">Resumo</TabsTrigger>
               <TabsTrigger value="stats">Estatísticas</TabsTrigger>
+              <TabsTrigger value="store" className="gap-1">
+                <ShoppingCart className="w-3 h-3" />
+                Loja
+              </TabsTrigger>
               <TabsTrigger value="log">Log</TabsTrigger>
             </TabsList>
 
@@ -188,6 +231,17 @@ export const Dashboard = () => {
 
             <TabsContent value="stats">
               <XpChart days={allDays} />
+            </TabsContent>
+
+            <TabsContent value="store">
+              <Store
+                coins={user.currentCoins}
+                rewards={user.storeRewards}
+                redeemedHistory={redeemedHistory}
+                onRedeemReward={handleRedeemReward}
+                onAddReward={handleAddReward}
+                onDeleteReward={handleDeleteReward}
+              />
             </TabsContent>
 
             <TabsContent value="log">
