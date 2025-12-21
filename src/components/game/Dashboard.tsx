@@ -8,10 +8,11 @@ import { MissionList } from './MissionList';
 import { HabitTracker } from './HabitTracker';
 import { DaySummary } from './DaySummary';
 import { EventLog } from './EventLog';
+import { XpChart } from './XpChart';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Play, Shield, LogOut } from 'lucide-react';
+import { Play, Shield, LogOut, BarChart3 } from 'lucide-react';
 import { generateId } from '@/lib/storage';
 import { toast } from 'sonner';
 
@@ -144,10 +145,11 @@ export const Dashboard = () => {
           </Card>
         ) : (
           <Tabs defaultValue="missions" className="space-y-6">
-            <TabsList className="grid grid-cols-4 w-full max-w-md mx-auto">
+            <TabsList className="grid grid-cols-5 w-full max-w-lg mx-auto">
               <TabsTrigger value="missions">Missões</TabsTrigger>
               <TabsTrigger value="habits">Hábitos</TabsTrigger>
               <TabsTrigger value="summary">Resumo</TabsTrigger>
+              <TabsTrigger value="stats">Estatísticas</TabsTrigger>
               <TabsTrigger value="log">Log</TabsTrigger>
             </TabsList>
 
@@ -182,6 +184,10 @@ export const Dashboard = () => {
 
             <TabsContent value="summary">
               <DaySummary day={currentDay} onCloseDay={handleCloseDay} />
+            </TabsContent>
+
+            <TabsContent value="stats">
+              <XpChart days={allDays} />
             </TabsContent>
 
             <TabsContent value="log">
