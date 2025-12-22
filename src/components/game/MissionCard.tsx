@@ -1,7 +1,7 @@
 import { Mission, MissionType } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
-import { Check, X, Sword, Target, Star, Coins, Zap } from 'lucide-react';
+import { Check, X, Sword, Target, Star, Coins } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface MissionCardProps {
@@ -63,10 +63,6 @@ export const MissionCard = ({ mission, onComplete, onFail, disabled }: MissionCa
           )}
           
           <div className="flex items-center gap-4 text-sm">
-            <span className="flex items-center gap-1 text-xp">
-              <Zap className="w-4 h-4" />
-              +{mission.xpReward} XP
-            </span>
             <span className="flex items-center gap-1 text-coin">
               <Coins className="w-4 h-4" />
               +{mission.coinReward}

@@ -13,7 +13,7 @@ import { Store } from './Store';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Play, Shield, LogOut, BarChart3, ShoppingCart } from 'lucide-react';
+import { Play, Shield, LogOut, BarChart3 } from 'lucide-react';
 import { generateId, addEvent } from '@/lib/storage';
 import { StoreReward } from '@/types/game';
 import { toast } from 'sonner';
@@ -189,10 +189,7 @@ export const Dashboard = () => {
               <TabsTrigger value="habits">Hábitos</TabsTrigger>
               <TabsTrigger value="summary">Resumo</TabsTrigger>
               <TabsTrigger value="stats">Estatísticas</TabsTrigger>
-              <TabsTrigger value="store" className="gap-1">
-                <ShoppingCart className="w-3 h-3" />
-                Loja
-              </TabsTrigger>
+              <TabsTrigger value="store">Loja</TabsTrigger>
               <TabsTrigger value="log">Log</TabsTrigger>
             </TabsList>
 
