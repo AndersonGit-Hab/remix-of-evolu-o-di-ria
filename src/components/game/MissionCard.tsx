@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { Mission, MissionType } from '@/types/game';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -17,7 +18,7 @@ const missionTypeConfig: Record<MissionType, { icon: React.ElementType; label: s
   bonus: { icon: Star, label: 'Bônus', color: 'text-coin', bgColor: 'bg-coin/10' },
 };
 
-export const MissionCard = ({ mission, onComplete, onFail, disabled }: MissionCardProps) => {
+export const MissionCard = forwardRef<HTMLDivElement, MissionCardProps>(({ mission, onComplete, onFail, disabled }, ref) => {
   const config = missionTypeConfig[mission.type];
   const Icon = config.icon;
   const isPending = mission.status === 'pending';
@@ -25,7 +26,7 @@ export const MissionCard = ({ mission, onComplete, onFail, disabled }: MissionCa
   const isFailed = mission.status === 'failed';
 
   return (
-    <Card className={cn(
+    <Card ref={ref} className={cn(
       "p-4 card-dark transition-all duration-300",
       isPending && "border-border/50 hover:border-primary/30",
       isCompleted && "border-success/30 bg-success/5",
@@ -92,4 +93,6 @@ export const MissionCard = ({ mission, onComplete, onFail, disabled }: MissionCa
       </div>
     </Card>
   );
-};
+});
+
+MissionCard.displayName = 'MissionCard';

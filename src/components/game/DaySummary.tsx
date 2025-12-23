@@ -1,3 +1,4 @@
+import { forwardRef } from 'react';
 import { GameDay } from '@/types/game';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -9,7 +10,7 @@ interface DaySummaryProps {
   onCloseDay: () => void;
 }
 
-export const DaySummary = ({ day, onCloseDay }: DaySummaryProps) => {
+export const DaySummary = forwardRef<HTMLDivElement, DaySummaryProps>(({ day, onCloseDay }, ref) => {
   const netXp = day.xpGained - day.xpLost;
   const completedMissions = day.missions.filter(m => m.status === 'completed').length;
   const failedMissions = day.missions.filter(m => m.status === 'failed').length;
@@ -17,7 +18,7 @@ export const DaySummary = ({ day, onCloseDay }: DaySummaryProps) => {
   const isOpen = day.status === 'open';
 
   return (
-    <Card className={cn(
+    <Card ref={ref} className={cn(
       "p-6 card-dark",
       day.isForgiveness && "border-success/30 bg-success/5"
     )}>
@@ -119,4 +120,6 @@ export const DaySummary = ({ day, onCloseDay }: DaySummaryProps) => {
       )}
     </Card>
   );
-};
+});
+
+DaySummary.displayName = 'DaySummary';
