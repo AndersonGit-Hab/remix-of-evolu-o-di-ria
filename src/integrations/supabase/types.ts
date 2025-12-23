@@ -14,13 +14,330 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      days: {
+        Row: {
+          closed_at: string | null
+          coins_earned: number
+          created_at: string
+          date: string
+          id: string
+          is_forgiveness: boolean
+          profile_id: string
+          status: string
+          xp_gained: number
+          xp_lost: number
+        }
+        Insert: {
+          closed_at?: string | null
+          coins_earned?: number
+          created_at?: string
+          date: string
+          id?: string
+          is_forgiveness?: boolean
+          profile_id: string
+          status?: string
+          xp_gained?: number
+          xp_lost?: number
+        }
+        Update: {
+          closed_at?: string | null
+          coins_earned?: number
+          created_at?: string
+          date?: string
+          id?: string
+          is_forgiveness?: boolean
+          profile_id?: string
+          status?: string
+          xp_gained?: number
+          xp_lost?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "days_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "users_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      events: {
+        Row: {
+          coin_change: number | null
+          created_at: string
+          details: string
+          id: string
+          profile_id: string
+          type: string
+          xp_change: number | null
+        }
+        Insert: {
+          coin_change?: number | null
+          created_at?: string
+          details: string
+          id?: string
+          profile_id: string
+          type: string
+          xp_change?: number | null
+        }
+        Update: {
+          coin_change?: number | null
+          created_at?: string
+          details?: string
+          id?: string
+          profile_id?: string
+          type?: string
+          xp_change?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "users_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habit_logs: {
+        Row: {
+          created_at: string
+          day_id: string
+          habit_id: string | null
+          habit_name: string
+          habit_type: string
+          id: string
+          xp_value: number
+        }
+        Insert: {
+          created_at?: string
+          day_id: string
+          habit_id?: string | null
+          habit_name: string
+          habit_type: string
+          id?: string
+          xp_value: number
+        }
+        Update: {
+          created_at?: string
+          day_id?: string
+          habit_id?: string | null
+          habit_name?: string
+          habit_type?: string
+          id?: string
+          xp_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habit_logs_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "days"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "habit_logs_habit_id_fkey"
+            columns: ["habit_id"]
+            isOneToOne: false
+            referencedRelation: "habits"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      habits: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          profile_id: string
+          type: string
+          xp_value: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          profile_id: string
+          type: string
+          xp_value: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          profile_id?: string
+          type?: string
+          xp_value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "habits_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "users_profile"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      missions: {
+        Row: {
+          coin_reward: number
+          created_at: string
+          day_id: string
+          description: string | null
+          id: string
+          status: string
+          title: string
+          type: string
+        }
+        Insert: {
+          coin_reward?: number
+          created_at?: string
+          day_id: string
+          description?: string | null
+          id?: string
+          status?: string
+          title: string
+          type: string
+        }
+        Update: {
+          coin_reward?: number
+          created_at?: string
+          day_id?: string
+          description?: string | null
+          id?: string
+          status?: string
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "missions_day_id_fkey"
+            columns: ["day_id"]
+            isOneToOne: false
+            referencedRelation: "days"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      redeemed_rewards: {
+        Row: {
+          id: string
+          profile_id: string
+          redeemed_at: string
+          reward_cost: number
+          reward_id: string | null
+          reward_name: string
+        }
+        Insert: {
+          id?: string
+          profile_id: string
+          redeemed_at?: string
+          reward_cost: number
+          reward_id?: string | null
+          reward_name: string
+        }
+        Update: {
+          id?: string
+          profile_id?: string
+          redeemed_at?: string
+          reward_cost?: number
+          reward_id?: string | null
+          reward_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "redeemed_rewards_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "users_profile"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "redeemed_rewards_reward_id_fkey"
+            columns: ["reward_id"]
+            isOneToOne: false
+            referencedRelation: "store_rewards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      store_rewards: {
+        Row: {
+          available: boolean
+          cost: number
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+        }
+        Insert: {
+          available?: boolean
+          cost: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+        }
+        Update: {
+          available?: boolean
+          cost?: number
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      users_profile: {
+        Row: {
+          bonus_slots: number
+          coins: number
+          created_at: string
+          has_forgiveness: boolean
+          id: string
+          level: number
+          secondary_slots: number
+          total_xp: number
+          updated_at: string
+          user_id: string
+          username: string
+        }
+        Insert: {
+          bonus_slots?: number
+          coins?: number
+          created_at?: string
+          has_forgiveness?: boolean
+          id?: string
+          level?: number
+          secondary_slots?: number
+          total_xp?: number
+          updated_at?: string
+          user_id: string
+          username: string
+        }
+        Update: {
+          bonus_slots?: number
+          coins?: number
+          created_at?: string
+          has_forgiveness?: boolean
+          id?: string
+          level?: number
+          secondary_slots?: number
+          total_xp?: number
+          updated_at?: string
+          user_id?: string
+          username?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_profile_id: { Args: never; Returns: string }
+      is_day_open: { Args: { day_uuid: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never
