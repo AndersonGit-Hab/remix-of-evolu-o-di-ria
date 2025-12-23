@@ -1,7 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useUser } from '@/hooks/useUser';
-import { useDay } from '@/hooks/useDay';
-import { useEvents } from '@/hooks/useEvents';
+import { useState } from 'react';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
+import { useHabits, Habit } from '@/hooks/useHabits';
+import { useGameDay, Mission } from '@/hooks/useGameDay';
+import { useSupabaseEvents } from '@/hooks/useSupabaseEvents';
+import { useStore, StoreReward, RedeemedReward } from '@/hooks/useStore';
 import { XpBar } from './XpBar';
 import { StatsDisplay } from './StatsDisplay';
 import { MissionList } from './MissionList';
@@ -13,131 +16,170 @@ import { Store } from './Store';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Play, Shield, LogOut, BarChart3 } from 'lucide-react';
-import { generateId, addEvent } from '@/lib/storage';
-import { StoreReward } from '@/types/game';
+import { Play, Shield, LogOut, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
-interface RedeemedReward {
-  id: string;
-  reward: StoreReward;
-  redeemedAt: string;
-}
-
 export const Dashboard = () => {
-  const { user, level, xpProgress, slots, addXp, removeXp, addCoins, spendCoins, updateUser, useForgiveness, resetUser } = useUser();
-  const { currentDay, allDays, startDay, addMission, updateMissionStatus, recordPositiveHabit, recordNegativeHabit, closeDay, loadDay } = useDay();
-  const { events, refresh: refreshEvents } = useEvents();
-  const [redeemedHistory, setRedeemedHistory] = useState<RedeemedReward[]>([]);
+  const { signOut } = useAuth();
+  const { profile, xpProgress, useForgiveness } = useProfile();
+  const { positiveHabits, negativeHabits, addHabit, deleteHabit } = useHabits();
+  const { currentDay, missions, allDays, startDay, addMission, updateMissionStatus, recordHabit, closeDay } = useGameDay();
+  const { events, fetchEvents } = useSupabaseEvents();
+  const { rewards, redeemedRewards, redeemReward } = useStore();
+  const [loggingOut, setLoggingOut] = useState(false);
 
-  useEffect(() => {
-    loadDay();
-  }, [loadDay]);
+  if (!profile) return null;
 
-  if (!user) return null;
+  const handleSignOut = async () => {
+    setLoggingOut(true);
+    await signOut();
+  };
 
-  const handleStartDay = (asForgiveness: boolean = false) => {
-    if (asForgiveness && user.forgivenessAvailable) {
-      useForgiveness();
+  const handleStartDay = async (asForgiveness: boolean = false) => {
+    if (asForgiveness && profile.has_forgiveness) {
+      await useForgiveness();
     }
-    startDay(asForgiveness);
-    refreshEvents();
+    await startDay(asForgiveness);
+    await fetchEvents();
     toast.success(asForgiveness ? 'Dia de perdão iniciado!' : 'Novo dia iniciado!');
   };
 
-  const handleCompleteMission = (id: string) => {
-    const result = updateMissionStatus(id, 'completed');
+  const handleCompleteMission = async (id: string) => {
+    const result = await updateMissionStatus(id, 'completed');
     if (result) {
-      addXp(result.xpChange);
-      addCoins(result.coinChange);
-      refreshEvents();
-      toast.success(`+${result.xpChange} XP, +${result.coinChange} moedas`);
+      await fetchEvents();
+      toast.success(`+${result.coinChange} moedas`);
     }
   };
 
-  const handleFailMission = (id: string) => {
-    updateMissionStatus(id, 'failed');
-    refreshEvents();
+  const handleFailMission = async (id: string) => {
+    await updateMissionStatus(id, 'failed');
+    await fetchEvents();
     toast.error('Missão falhou');
   };
 
-  const handleRecordPositive = (habit: typeof user.positiveHabits[0]) => {
-    const xpGained = recordPositiveHabit(habit.name, habit.xpValue);
+  const handleRecordPositive = async (habit: Habit) => {
+    const xpGained = await recordHabit(habit.id, habit.name, 'positive', habit.xp_value);
     if (xpGained > 0) {
-      addXp(xpGained);
-      updateUser({
-        positiveHabits: user.positiveHabits.map(h => 
-          h.id === habit.id ? { ...h, completedToday: true } : h
-        ),
-      });
-      refreshEvents();
+      await fetchEvents();
       toast.success(`+${xpGained} XP por ${habit.name}`);
     }
   };
 
-  const handleRecordNegative = (habit: typeof user.negativeHabits[0]) => {
-    const xpLost = recordNegativeHabit(habit.name, habit.xpPenalty);
+  const handleRecordNegative = async (habit: Habit) => {
+    const xpLost = await recordHabit(habit.id, habit.name, 'negative', habit.xp_value);
     if (xpLost > 0) {
-      removeXp(xpLost);
-      updateUser({
-        negativeHabits: user.negativeHabits.map(h => 
-          h.id === habit.id ? { ...h, triggeredToday: true } : h
-        ),
-      });
-      refreshEvents();
+      await fetchEvents();
       toast.error(`-${xpLost} XP`);
     }
   };
 
-  const handleCloseDay = () => {
-    const result = closeDay();
+  const handleCloseDay = async () => {
+    const result = await closeDay();
     if (result) {
-      refreshEvents();
+      await fetchEvents();
       toast.success(`Dia encerrado! XP líquido: ${result.netXp >= 0 ? '+' : ''}${result.netXp}`);
     }
   };
 
-  const handleAddPositiveHabit = (name: string, xpValue: number) => {
-    updateUser({
-      positiveHabits: [...user.positiveHabits, { id: generateId(), name, xpValue, completedToday: false }],
-    });
+  const handleAddPositiveHabit = async (name: string, xpValue: number) => {
+    await addHabit(name, 'positive', xpValue);
   };
 
-  const handleAddNegativeHabit = (name: string, xpPenalty: number) => {
-    updateUser({
-      negativeHabits: [...user.negativeHabits, { id: generateId(), name, xpPenalty, triggeredToday: false }],
-    });
+  const handleAddNegativeHabit = async (name: string, xpPenalty: number) => {
+    await addHabit(name, 'negative', xpPenalty);
   };
 
-  const handleRedeemReward = (reward: StoreReward) => {
-    if (spendCoins(reward.cost)) {
-      const redeemed: RedeemedReward = {
-        id: generateId(),
-        reward,
-        redeemedAt: new Date().toISOString(),
-      };
-      setRedeemedHistory(prev => [redeemed, ...prev]);
-      addEvent({ type: 'reward_redeemed', details: `Resgatou: ${reward.name}`, coinChange: -reward.cost });
-      refreshEvents();
+  const handleRedeemReward = async (reward: StoreReward) => {
+    const success = await redeemReward(reward);
+    if (success) {
+      await fetchEvents();
       toast.success(`🎁 ${reward.name} resgatado!`);
+    } else {
+      toast.error('Moedas insuficientes');
     }
   };
 
-  const handleAddReward = (name: string, description: string, cost: number) => {
-    const newReward: StoreReward = {
-      id: generateId(),
-      name,
-      description,
-      cost,
-      available: true,
-    };
-    updateUser({ storeRewards: [...user.storeRewards, newReward] });
-    toast.success('Recompensa adicionada!');
-  };
+  // Convert missions to format expected by MissionList
+  const formattedMissions = missions.map(m => ({
+    id: m.id,
+    type: m.type,
+    title: m.title,
+    description: m.description || undefined,
+    status: m.status,
+    xpReward: 0,
+    coinReward: m.coin_reward,
+  }));
 
-  const handleDeleteReward = (id: string) => {
-    updateUser({ storeRewards: user.storeRewards.filter(r => r.id !== id) });
-  };
+  // Convert habits to format expected by HabitTracker
+  const formattedPositiveHabits = positiveHabits.map(h => ({
+    id: h.id,
+    name: h.name,
+    xpValue: h.xp_value,
+    completedToday: false,
+  }));
+
+  const formattedNegativeHabits = negativeHabits.map(h => ({
+    id: h.id,
+    name: h.name,
+    xpPenalty: h.xp_value,
+    triggeredToday: false,
+  }));
+
+  // Convert day to format expected by DaySummary
+  const formattedDay = currentDay ? {
+    id: currentDay.id,
+    date: currentDay.date,
+    status: currentDay.status,
+    missions: formattedMissions,
+    xpGained: currentDay.xp_gained,
+    xpLost: currentDay.xp_lost,
+    coinsEarned: currentDay.coins_earned,
+    isForgiveness: currentDay.is_forgiveness,
+  } : null;
+
+  // Convert events to format expected by EventLog
+  const formattedEvents = events.map(e => ({
+    id: e.id,
+    timestamp: e.created_at,
+    type: e.type as any,
+    details: e.details,
+    xpChange: e.xp_change ?? undefined,
+    coinChange: e.coin_change ?? undefined,
+  }));
+
+  // Convert allDays for XpChart
+  const formattedAllDays = allDays.map(d => ({
+    id: d.id,
+    date: d.date,
+    status: d.status,
+    missions: [],
+    xpGained: d.xp_gained,
+    xpLost: d.xp_lost,
+    coinsEarned: d.coins_earned,
+    isForgiveness: d.is_forgiveness,
+  }));
+
+  // Convert for Store
+  const formattedRewards = rewards.map(r => ({
+    id: r.id,
+    name: r.name,
+    description: r.description || '',
+    cost: r.cost,
+    available: r.available,
+  }));
+
+  const formattedRedeemedHistory = redeemedRewards.map(r => ({
+    id: r.id,
+    reward: {
+      id: r.reward_id || '',
+      name: r.reward_name,
+      description: '',
+      cost: r.reward_cost,
+      available: true,
+    },
+    redeemedAt: r.redeemed_at,
+  }));
 
   return (
     <div className="min-h-screen bg-background">
@@ -145,24 +187,24 @@ export const Dashboard = () => {
         <div className="container mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="font-display text-2xl font-bold text-gradient-gold">{user.name}</h1>
-              <p className="text-sm text-muted-foreground">Nível {level} • {user.totalXp.toLocaleString()} XP total</p>
+              <h1 className="font-display text-2xl font-bold text-gradient-gold">{profile.username}</h1>
+              <p className="text-sm text-muted-foreground">Nível {profile.level} • {profile.total_xp.toLocaleString()} XP total</p>
             </div>
-            <Button variant="ghost" size="sm" onClick={resetUser} className="text-muted-foreground">
-              <LogOut className="w-4 h-4" />
+            <Button variant="ghost" size="sm" onClick={handleSignOut} disabled={loggingOut} className="text-muted-foreground">
+              {loggingOut ? <Loader2 className="w-4 h-4 animate-spin" /> : <LogOut className="w-4 h-4" />}
             </Button>
           </div>
-          <XpBar current={xpProgress.current} needed={xpProgress.needed} level={level} />
+          <XpBar current={xpProgress.current} needed={xpProgress.needed} level={profile.level} />
         </div>
       </header>
 
       <main className="container mx-auto px-4 py-6 space-y-6">
         <StatsDisplay
-          totalXp={user.totalXp}
-          coins={user.currentCoins}
-          level={level}
+          totalXp={profile.total_xp}
+          coins={profile.coins}
+          level={profile.level}
           daysPlayed={allDays.length}
-          forgivenessAvailable={user.forgivenessAvailable}
+          forgivenessAvailable={profile.has_forgiveness}
         />
 
         {!currentDay ? (
@@ -174,7 +216,7 @@ export const Dashboard = () => {
                 <Play className="w-4 h-4 mr-2" />
                 Iniciar Dia Normal
               </Button>
-              {user.forgivenessAvailable && (
+              {profile.has_forgiveness && (
                 <Button variant="outline" onClick={() => handleStartDay(true)} className="border-success/30 text-success">
                   <Shield className="w-4 h-4 mr-2" />
                   Usar Perdão
@@ -195,10 +237,10 @@ export const Dashboard = () => {
 
             <TabsContent value="missions">
               <MissionList
-                missions={currentDay.missions}
-                slots={slots}
+                missions={formattedMissions}
+                slots={{ secondary: profile.secondary_slots, bonus: profile.bonus_slots }}
                 dayStatus={currentDay.status}
-                isForgiveness={currentDay.isForgiveness}
+                isForgiveness={currentDay.is_forgiveness}
                 onAddMission={(type, title) => addMission(type, title)}
                 onCompleteMission={handleCompleteMission}
                 onFailMission={handleFailMission}
@@ -207,42 +249,42 @@ export const Dashboard = () => {
 
             <TabsContent value="habits">
               <HabitTracker
-                positiveHabits={user.positiveHabits}
-                negativeHabits={user.negativeHabits}
-                dayXpGained={currentDay.xpGained}
-                dayXpLost={currentDay.xpLost}
+                positiveHabits={formattedPositiveHabits}
+                negativeHabits={formattedNegativeHabits}
+                dayXpGained={currentDay.xp_gained}
+                dayXpLost={currentDay.xp_lost}
                 dayStatus={currentDay.status}
-                isForgiveness={currentDay.isForgiveness}
+                isForgiveness={currentDay.is_forgiveness}
                 onAddPositiveHabit={handleAddPositiveHabit}
                 onAddNegativeHabit={handleAddNegativeHabit}
-                onRemovePositiveHabit={(id) => updateUser({ positiveHabits: user.positiveHabits.filter(h => h.id !== id) })}
-                onRemoveNegativeHabit={(id) => updateUser({ negativeHabits: user.negativeHabits.filter(h => h.id !== id) })}
-                onRecordPositive={handleRecordPositive}
-                onRecordNegative={handleRecordNegative}
+                onRemovePositiveHabit={(id) => deleteHabit(id)}
+                onRemoveNegativeHabit={(id) => deleteHabit(id)}
+                onRecordPositive={(h) => handleRecordPositive(positiveHabits.find(ph => ph.id === h.id)!)}
+                onRecordNegative={(h) => handleRecordNegative(negativeHabits.find(nh => nh.id === h.id)!)}
               />
             </TabsContent>
 
             <TabsContent value="summary">
-              <DaySummary day={currentDay} onCloseDay={handleCloseDay} />
+              {formattedDay && <DaySummary day={formattedDay} onCloseDay={handleCloseDay} />}
             </TabsContent>
 
             <TabsContent value="stats">
-              <XpChart days={allDays} />
+              <XpChart days={formattedAllDays} />
             </TabsContent>
 
             <TabsContent value="store">
               <Store
-                coins={user.currentCoins}
-                rewards={user.storeRewards}
-                redeemedHistory={redeemedHistory}
-                onRedeemReward={handleRedeemReward}
-                onAddReward={handleAddReward}
-                onDeleteReward={handleDeleteReward}
+                coins={profile.coins}
+                rewards={formattedRewards}
+                redeemedHistory={formattedRedeemedHistory}
+                onRedeemReward={(r) => handleRedeemReward(rewards.find(rw => rw.id === r.id)!)}
+                onAddReward={() => {}}
+                onDeleteReward={() => {}}
               />
             </TabsContent>
 
             <TabsContent value="log">
-              <EventLog events={events} />
+              <EventLog events={formattedEvents} />
             </TabsContent>
           </Tabs>
         )}
