@@ -1,25 +1,35 @@
 import { useEffect } from 'react';
-import { useUser } from '@/hooks/useUser';
-import { CharacterCreate } from '@/components/game/CharacterCreate';
+import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/hooks/useAuth';
+import { useProfile } from '@/hooks/useProfile';
 import { Dashboard } from '@/components/game/Dashboard';
+import { Loader2 } from 'lucide-react';
 
 const Index = () => {
-  const { user, loading, createUser } = useUser();
+  const navigate = useNavigate();
+  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { profile, loading: profileLoading } = useProfile();
 
   useEffect(() => {
     document.documentElement.classList.add('dark');
   }, []);
 
-  if (loading) {
+  useEffect(() => {
+    if (!authLoading && !isAuthenticated) {
+      navigate('/auth');
+    }
+  }, [authLoading, isAuthenticated, navigate]);
+
+  if (authLoading || profileLoading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse text-primary font-display text-xl">Carregando...</div>
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  if (!user) {
-    return <CharacterCreate onCreateCharacter={createUser} />;
+  if (!isAuthenticated || !profile) {
+    return null;
   }
 
   return <Dashboard />;
