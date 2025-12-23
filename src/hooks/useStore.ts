@@ -107,6 +107,44 @@ export const useStore = () => {
     return true;
   }, [profile, spendCoins, fetchRedeemedRewards]);
 
+  const addReward = useCallback(async (name: string, description: string, cost: number): Promise<boolean> => {
+    if (!isAuthenticated) return false;
+
+    const { error } = await supabase
+      .from('store_rewards')
+      .insert({
+        name,
+        description: description || null,
+        cost,
+        available: true,
+      });
+
+    if (error) {
+      console.error('Error adding reward:', error);
+      return false;
+    }
+
+    await fetchRewards();
+    return true;
+  }, [isAuthenticated, fetchRewards]);
+
+  const deleteReward = useCallback(async (id: string): Promise<boolean> => {
+    if (!isAuthenticated) return false;
+
+    const { error } = await supabase
+      .from('store_rewards')
+      .delete()
+      .eq('id', id);
+
+    if (error) {
+      console.error('Error deleting reward:', error);
+      return false;
+    }
+
+    await fetchRewards();
+    return true;
+  }, [isAuthenticated, fetchRewards]);
+
   return {
     rewards,
     redeemedRewards,
@@ -114,5 +152,7 @@ export const useStore = () => {
     fetchRewards,
     fetchRedeemedRewards,
     redeemReward,
+    addReward,
+    deleteReward,
   };
 };

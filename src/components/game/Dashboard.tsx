@@ -25,7 +25,7 @@ export const Dashboard = () => {
   const { positiveHabits, negativeHabits, addHabit, deleteHabit } = useHabits();
   const { currentDay, missions, allDays, startDay, addMission, updateMissionStatus, recordHabit, closeDay } = useGameDay();
   const { events, fetchEvents } = useSupabaseEvents();
-  const { rewards, redeemedRewards, redeemReward } = useStore();
+  const { rewards, redeemedRewards, redeemReward, addReward, deleteReward } = useStore();
   const [loggingOut, setLoggingOut] = useState(false);
 
   if (!profile) return null;
@@ -97,6 +97,24 @@ export const Dashboard = () => {
       toast.success(`🎁 ${reward.name} resgatado!`);
     } else {
       toast.error('Moedas insuficientes');
+    }
+  };
+
+  const handleAddReward = async (name: string, description: string, cost: number) => {
+    const success = await addReward(name, description, cost);
+    if (success) {
+      toast.success('Recompensa adicionada!');
+    } else {
+      toast.error('Erro ao adicionar recompensa');
+    }
+  };
+
+  const handleDeleteReward = async (id: string) => {
+    const success = await deleteReward(id);
+    if (success) {
+      toast.success('Recompensa removida');
+    } else {
+      toast.error('Erro ao remover recompensa');
     }
   };
 
@@ -278,8 +296,8 @@ export const Dashboard = () => {
                 rewards={formattedRewards}
                 redeemedHistory={formattedRedeemedHistory}
                 onRedeemReward={(r) => handleRedeemReward(rewards.find(rw => rw.id === r.id)!)}
-                onAddReward={() => {}}
-                onDeleteReward={() => {}}
+                onAddReward={handleAddReward}
+                onDeleteReward={handleDeleteReward}
               />
             </TabsContent>
 
