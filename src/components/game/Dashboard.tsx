@@ -23,7 +23,7 @@ export const Dashboard = () => {
   const { signOut } = useAuth();
   const { profile, xpProgress, useForgiveness } = useProfile();
   const { positiveHabits, negativeHabits, addHabit, deleteHabit } = useHabits();
-  const { currentDay, missions, allDays, startDay, addMission, updateMissionStatus, recordHabit, closeDay } = useGameDay();
+  const { currentDay, missions, habitLogs, allDays, startDay, addMission, updateMissionStatus, recordHabit, closeDay } = useGameDay();
   const { events, fetchEvents } = useSupabaseEvents();
   const { rewards, redeemedRewards, redeemReward, addReward, deleteReward } = useStore();
   const [loggingOut, setLoggingOut] = useState(false);
@@ -134,14 +134,14 @@ export const Dashboard = () => {
     id: h.id,
     name: h.name,
     xpValue: h.xp_value,
-    completedToday: false,
+    completedToday: habitLogs.some(log => log.habit_id === h.id && log.habit_type === 'positive'),
   }));
 
   const formattedNegativeHabits = negativeHabits.map(h => ({
     id: h.id,
     name: h.name,
     xpPenalty: h.xp_value,
-    triggeredToday: false,
+    triggeredToday: habitLogs.some(log => log.habit_id === h.id && log.habit_type === 'negative'),
   }));
 
   // Convert day to format expected by DaySummary
