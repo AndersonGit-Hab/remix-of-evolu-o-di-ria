@@ -37,6 +37,11 @@ export interface GameDay {
   xpLost: number;
   coinsEarned: number;
   isForgiveness: boolean;
+  // Stats for charts
+  positiveHabitsCount?: number;
+  negativeHabitsCount?: number;
+  missionsTotal?: number;
+  missionsCompleted?: number;
 }
 
 export interface SlotUnlockChoice {

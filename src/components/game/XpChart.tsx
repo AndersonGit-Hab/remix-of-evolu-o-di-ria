@@ -24,6 +24,11 @@ export const XpChart = ({ days }: XpChartProps) => {
           netXp,
           xpGained: day.xpGained,
           xpLost: day.xpLost,
+          coins: day.coinsEarned,
+          positiveHabits: day.positiveHabitsCount || 0,
+          negativeHabits: day.negativeHabitsCount || 0,
+          missionsCompleted: day.missionsCompleted || 0,
+          missionsTotal: day.missionsTotal || 0,
         };
       });
     return last30Days;
@@ -93,20 +98,30 @@ export const XpChart = ({ days }: XpChartProps) => {
               />
               <ReferenceLine y={0} stroke="hsl(var(--muted-foreground))" strokeDasharray="3 3" opacity={0.5} />
               <ChartTooltip 
-                content={
-                  <ChartTooltipContent 
-                    formatter={(value, name) => {
-                      const numValue = Number(value);
-                      return [`${numValue >= 0 ? '+' : ''}${numValue} XP`, 'XP Líquido'];
-                    }}
-                    labelFormatter={(label, payload) => {
-                      if (payload && payload[0]) {
-                        return `Dia ${payload[0].payload.day}`;
-                      }
-                      return `Dia ${label}`;
-                    }}
-                  />
-                }
+                content={({ active, payload }) => {
+                  if (!active || !payload?.length) return null;
+                  const data = payload[0].payload;
+                  
+                  return (
+                    <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+                      <p className="font-semibold text-sm mb-2 text-foreground">Dia {data.day}</p>
+                      <div className="space-y-1 text-sm">
+                        <p className={data.netXp >= 0 ? 'text-success' : 'text-destructive'}>
+                          XP Líquido: {data.netXp >= 0 ? '+' : ''}{data.netXp}
+                        </p>
+                        <p className="text-muted-foreground">
+                          Missões: {data.missionsCompleted}/{data.missionsTotal}
+                        </p>
+                        <p className="text-muted-foreground">
+                          Hábitos: +{data.positiveHabits} / -{data.negativeHabits}
+                        </p>
+                        <p className="text-yellow-500">
+                          Moedas: +{data.coins}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }}
               />
               <Line 
                 type="monotone" 
