@@ -13,6 +13,7 @@ export const XpChart = ({ days }: XpChartProps) => {
   const chartData = useMemo(() => {
     const last30Days = days
       .filter(day => day.status === 'closed')
+      .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .slice(-30)
       .map(day => {
         const date = new Date(day.date);
