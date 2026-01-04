@@ -25,6 +25,11 @@ export interface GameDay {
   is_forgiveness: boolean;
   created_at: string;
   closed_at: string | null;
+  // Stats for charts
+  positiveHabitsCount?: number;
+  negativeHabitsCount?: number;
+  missionsTotal?: number;
+  missionsCompleted?: number;
 }
 
 export interface HabitLog {
@@ -109,13 +114,47 @@ export const useGameDay = () => {
       return;
     }
 
-    const { data } = await supabase
+    const { data: daysData } = await supabase
       .from('days')
       .select('*')
       .eq('profile_id', profile.id)
       .order('date', { ascending: false });
 
-    setAllDays((data || []) as GameDay[]);
+    if (!daysData || daysData.length === 0) {
+      setAllDays([]);
+      return;
+    }
+
+    // Fetch stats for each day in parallel
+    const daysWithStats = await Promise.all(
+      daysData.map(async (day) => {
+        const [habitsResult, missionsResult] = await Promise.all([
+          supabase
+            .from('habit_logs')
+            .select('habit_type')
+            .eq('day_id', day.id),
+          supabase
+            .from('missions')
+            .select('status')
+            .eq('day_id', day.id),
+        ]);
+
+        const positiveHabitsCount = habitsResult.data?.filter(h => h.habit_type === 'positive').length || 0;
+        const negativeHabitsCount = habitsResult.data?.filter(h => h.habit_type === 'negative').length || 0;
+        const missionsTotal = missionsResult.data?.length || 0;
+        const missionsCompleted = missionsResult.data?.filter(m => m.status === 'completed').length || 0;
+
+        return {
+          ...day,
+          positiveHabitsCount,
+          negativeHabitsCount,
+          missionsTotal,
+          missionsCompleted,
+        };
+      })
+    );
+
+    setAllDays(daysWithStats as GameDay[]);
   }, [profile]);
 
   useEffect(() => {
